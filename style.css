@@ -72,7 +72,13 @@ textarea { resize:vertical; }
 .details-body { border-top:1px solid var(--border); padding:14px 16px; overflow-wrap:anywhere; }
 .raw-json pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:560px; overflow:auto; font-size:.78rem; color:#c6d5e8; }
 .data-list { margin:0; }
-.data-row { display:grid; grid-template-columns:minmax(150px, .8fr) minmax(0,1.5fr); gap:15px; padding:10px 0; border-bottom:1px solid rgba(49,63,85,.55); }
+.data-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(49,63,85,.55);
+}
 .data-row:last-child { border-bottom:0; }
 .data-row dt { color:var(--muted); overflow-wrap:anywhere; }
 .data-row dd { margin:0; min-width:0; overflow-wrap:anywhere; }
