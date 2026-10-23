@@ -449,9 +449,21 @@ try {
 
 async function currentUserId() {
   const { data, error } = await supabaseClient.auth.getUser();
-  if (error || !data?.user?.id) throw new Error("Fant ikke innlogget bruker. Logg inn på nytt.");
+
+  console.log("Innlogget bruker:", data?.user);
+
+  if (error) {
+    console.error("Feil ved henting av bruker:", error);
+    throw new Error("Kunne ikke hente innlogget bruker.");
+  }
+
+  if (!data?.user?.id || typeof data.user.id !== "string") {
+    throw new Error("Fant ingen gyldig innlogget bruker. Logg ut og inn igjen.");
+  }
+
   return data.user.id;
 }
+
 async function saveCurrentVehicle() {
   if (!latestVehicleData || !latestVehicle) return;
   const userId = await currentUserId();
