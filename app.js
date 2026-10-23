@@ -241,13 +241,27 @@ function formatScalar(value, key = "") {
     if (/maks(Netto)?Effekt|maksEffektPrTime/i.test(key)) return `${value} kW`;
     return String(value);
   }
-  if (typeof value === "string") {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      const [y,m,d] = value.split("-");
-      return `${d}.${m}.${y}`;
-    }
-    return value;
+if (typeof value === "string") {
+  // Vanlig dato: 2025-03-08 -> 08.03.2025
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-");
+    return `${d}.${m}.${y}`;
   }
+
+  // Dato med klokkeslett
+  if (/^\d{4}-\d{2}-\d{2}T/.test(value)) {
+    const date = new Date(value);
+
+    if (!Number.isNaN(date.getTime())) {
+      return new Intl.DateTimeFormat("nb-NO", {
+        dateStyle: "short",
+        timeStyle: "short"
+      }).format(date);
+    }
+  }
+
+  return value;
+}
   return String(value);
 }
 function renderValue(value, key = "") {
