@@ -2,111 +2,115 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0b0f19">
   <title>Vehicle Tracker</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-  <main class="container">
-    <header class="topbar">
-      <a class="brand" href="#">
-        <span class="brand-icon">V</span>
-        <span>Vehicle<span class="accent">Tracker</span></span>
-      </a>
-      <span class="status"><span class="status-dot"></span> Online</span>
-    </header>
-
+  <main class="app-shell">
     <section id="auth-view" class="auth-layout">
-      <div class="intro">
-        <div class="eyebrow">VEHICLE MANAGEMENT SYSTEM</div>
-        <h1>All kontroll.<br><span class="accent">Ett sted.</span></h1>
-        <p>Hold oversikt over kjøretøy, observasjoner og kjøretøyhistorikk fra ett samlet dashboard.</p>
-        <div class="feature-list">
-          <div><span>01</span> Kjøretøyregister</div>
-          <div><span>02</span> Observasjonshistorikk</div>
-          <div><span>03</span> Personlig dashboard</div>
-        </div>
+      <div class="brand-block">
+        <div class="brand-mark">VT</div>
+        <p class="eyebrow">PERSONLIG KJØRETØYREGISTER</p>
+        <h1>Vehicle Tracker</h1>
+        <p class="muted">Søk opp kjøretøy, lagre data og hold oversikt over observasjoner.</p>
       </div>
-
-      <div class="auth-card">
+      <div class="auth-card panel">
         <div class="tabs">
           <button id="login-tab" class="tab active" type="button">Logg inn</button>
           <button id="signup-tab" class="tab" type="button">Opprett konto</button>
         </div>
-
-        <div class="card-heading">
-          <h2 id="auth-title">Velkommen tilbake</h2>
-          <p id="auth-description">Logg inn for å åpne dashboardet ditt.</p>
-        </div>
-
+        <h2 id="auth-title">Velkommen tilbake</h2>
+        <p id="auth-description" class="muted">Logg inn for å åpne dashboardet ditt.</p>
         <form id="auth-form">
-          <label for="email">E-postadresse</label>
-          <input id="email" type="email" placeholder="deg@eksempel.no" autocomplete="email" required>
-
+          <label for="email">E-post</label>
+          <input id="email" type="email" autocomplete="email" placeholder="deg@eksempel.no" required>
           <label for="password">Passord</label>
-          <input id="password" type="password" placeholder="Minst 8 tegn anbefales" autocomplete="current-password" minlength="6" required>
-
-          <button id="submit-button" class="primary-button" type="submit">Logg inn <span>→</span></button>
+          <input id="password" type="password" autocomplete="current-password" placeholder="Passord" minlength="6" required>
+          <button id="submit-button" class="button primary full" type="submit">Logg inn <span>→</span></button>
         </form>
-
         <button id="reset-button" class="text-button" type="button">Glemt passord?</button>
         <p id="auth-message" class="message" role="status" aria-live="polite"></p>
-        <p class="security-note">🔒 Kontoen din autentiseres via Supabase.</p>
       </div>
     </section>
 
     <section id="dashboard-view" hidden>
-      <div class="welcome-row">
-        <div>
-          <div class="eyebrow">OVERSIKT</div>
-          <h1>Dashboard<span class="accent">.</span></h1>
-          <p class="muted">Velkommen til Vehicle Tracker.</p>
+      <header class="topbar">
+        <div class="brand-inline"><div class="brand-mark small">VT</div><div><strong>Vehicle Tracker</strong><span class="muted tiny">Kjøretøyregister</span></div></div>
+        <div class="account-area"><span id="user-email" class="muted"></span><button id="logout-button" class="button secondary" type="button">Logg ut</button></div>
+      </header>
+
+      <section class="welcome-row">
+        <div><p class="eyebrow">DASHBOARD</p><h1>Oversikt</h1><p class="muted">Slå opp et registreringsnummer eller åpne kjøretøyene du har lagret.</p></div>
+      </section>
+
+      <section class="stats-grid" aria-label="Statistikk">
+        <article class="stat-card panel"><span class="stat-label">Lagrede kjøretøy</span><strong id="stat-vehicles">—</strong></article>
+        <article class="stat-card panel"><span class="stat-label">Observasjoner</span><strong id="stat-observations">—</strong></article>
+        <article class="stat-card panel"><span class="stat-label">Siste oppslag</span><strong id="stat-last-lookup">Ingen ennå</strong></article>
+      </section>
+
+      <section class="panel search-panel">
+        <div class="section-heading"><div><p class="eyebrow">STATENS VEGVESEN</p><h2>Slå opp kjøretøy</h2></div><span class="status-pill"><span class="status-dot"></span> Teknisk data</span></div>
+        <form id="lookup-form" class="lookup-form">
+          <div class="input-wrap"><label for="registration-input">Registreringsnummer</label><input id="registration-input" type="text" autocomplete="off" autocapitalize="characters" placeholder="F.eks. EV14354" maxlength="12" required></div>
+          <button id="lookup-button" class="button primary" type="submit">Søk kjøretøy <span>→</span></button>
+        </form>
+        <p class="muted tiny">Oppslag henter tekniske data. Det registreres ikke som en observasjon automatisk.</p>
+        <p id="lookup-message" class="message" role="status" aria-live="polite"></p>
+      </section>
+
+      <section id="lookup-results" class="panel results-panel" hidden>
+        <div class="section-heading"><div><p class="eyebrow">OPPSLAGSRESULTAT</p><h2 id="result-title">Kjøretøy</h2><p id="result-subtitle" class="muted"></p></div><button id="save-vehicle-button" class="button primary" type="button">Lagre kjøretøy</button></div>
+        <div id="vehicle-summary" class="summary-grid"></div>
+        <div id="technical-sections" class="technical-sections"></div>
+        <details class="technical-dropdown raw-json">
+          <summary><span>Rådata (JSON)</span><span class="summary-hint">Hele svaret fra API-et</span></summary>
+          <div class="details-body"><pre id="raw-json-content"></pre></div>
+        </details>
+      </section>
+
+      <section class="content-grid">
+        <section class="panel">
+          <div class="section-heading"><div><p class="eyebrow">DITT REGISTER</p><h2>Lagrede kjøretøy</h2></div><button id="refresh-button" class="button secondary small-button" type="button">Oppdater</button></div>
+          <div id="saved-vehicles" class="saved-list"><p class="muted">Laster kjøretøy …</p></div>
+        </section>
+        <section class="panel">
+          <div class="section-heading"><div><p class="eyebrow">HISTORIKK</p><h2>Siste observasjoner</h2></div></div>
+          <div id="recent-observations" class="saved-list"><p class="muted">Laster observasjoner …</p></div>
+        </section>
+      </section>
+
+      <section id="vehicle-workspace" class="panel workspace-panel" hidden>
+        <div class="section-heading"><div><p class="eyebrow">KJØRETØYPROFIL</p><h2 id="workspace-title">Kjøretøy</h2><p id="workspace-subtitle" class="muted"></p></div><button id="close-workspace-button" class="button secondary" type="button">Lukk profil</button></div>
+        <div class="workspace-grid">
+          <section class="workspace-card">
+            <h3>Legg til observasjon</h3>
+            <p class="muted tiny">Brukes når du faktisk har observert kjøretøyet. Et oppslag teller ikke som observasjon.</p>
+            <form id="observation-form">
+              <label for="observation-date">Tidspunkt</label><input id="observation-date" type="datetime-local">
+              <label for="observation-location">Sted (valgfritt)</label><input id="observation-location" type="text" maxlength="200" placeholder="F.eks. Ås sentrum">
+              <label for="observation-note">Notat (valgfritt)</label><textarea id="observation-note" rows="3" maxlength="2000" placeholder="Hva observerte du?"></textarea>
+              <button class="button primary full" type="submit">Registrer observasjon</button>
+            </form>
+          </section>
+          <section class="workspace-card">
+            <h3>Notater</h3><p class="muted tiny">Notater er valgfrie og kan stå tomme.</p>
+            <form id="note-form">
+              <label for="note-title">Tittel</label><input id="note-title" type="text" maxlength="120" placeholder="Notat">
+              <label for="note-content">Innhold</label><textarea id="note-content" rows="4" maxlength="10000" placeholder="Skriv et notat …"></textarea>
+              <button class="button primary full" type="submit">Lagre notat</button>
+            </form>
+            <div id="vehicle-notes" class="notes-list"></div>
+          </section>
         </div>
-        <button id="logout-button" class="secondary-button" type="button">Logg ut ↗</button>
-      </div>
-
-      <div class="user-panel">
-        <span class="avatar">V</span>
-        <div>
-          <strong>Du er logget inn</strong>
-          <p id="user-email" class="muted"></p>
-        </div>
-      </div>
-
-      <div class="stats-grid">
-        <article class="stat-card">
-          <span class="stat-label">KJØRETØY</span>
-          <div class="stat-number">—</div>
-          <p>Registrerte kjøretøy</p>
-        </article>
-        <article class="stat-card">
-          <span class="stat-label">OBSERVASJONER</span>
-          <div class="stat-number">—</div>
-          <p>Totalt registrerte treff</p>
-        </article>
-        <article class="stat-card">
-          <span class="stat-label">API-OPPSLAG</span>
-          <div class="stat-number">—</div>
-          <p>Kjøretøyoppslag</p>
-        </article>
-      </div>
-
-      <article class="coming-soon">
-        <div class="coming-icon">🚘</div>
-        <div>
-          <h2>Kjøretøyregisteret kommer snart</h2>
-          <p class="muted">Neste steg er å koble til databasen og bygge søk, kjøretøyinformasjon og observasjonshistorikk.</p>
-        </div>
-        <span class="badge">UNDER UTVIKLING</span>
-      </article>
-
-      <footer class="dashboard-footer">Vehicle Tracker <span>•</span> Første versjon</footer>
+        <p id="workspace-message" class="message" role="status" aria-live="polite"></p>
+      </section>
+      <footer class="footer muted tiny">Vehicle Tracker · Tekniske opplysninger leveres av Statens vegvesen. Ingen eieropplysninger vises.</footer>
     </section>
   </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
 </body>
 </html>
-
