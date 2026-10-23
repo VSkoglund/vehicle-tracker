@@ -1,1 +1,112 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b0f19">
+  <title>Vehicle Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <header class="topbar">
+      <a class="brand" href="#">
+        <span class="brand-icon">V</span>
+        <span>Vehicle<span class="accent">Tracker</span></span>
+      </a>
+      <span class="status"><span class="status-dot"></span> Online</span>
+    </header>
+
+    <section id="auth-view" class="auth-layout">
+      <div class="intro">
+        <div class="eyebrow">VEHICLE MANAGEMENT SYSTEM</div>
+        <h1>All kontroll.<br><span class="accent">Ett sted.</span></h1>
+        <p>Hold oversikt over kjøretøy, observasjoner og kjøretøyhistorikk fra ett samlet dashboard.</p>
+        <div class="feature-list">
+          <div><span>01</span> Kjøretøyregister</div>
+          <div><span>02</span> Observasjonshistorikk</div>
+          <div><span>03</span> Personlig dashboard</div>
+        </div>
+      </div>
+
+      <div class="auth-card">
+        <div class="tabs">
+          <button id="login-tab" class="tab active" type="button">Logg inn</button>
+          <button id="signup-tab" class="tab" type="button">Opprett konto</button>
+        </div>
+
+        <div class="card-heading">
+          <h2 id="auth-title">Velkommen tilbake</h2>
+          <p id="auth-description">Logg inn for å åpne dashboardet ditt.</p>
+        </div>
+
+        <form id="auth-form">
+          <label for="email">E-postadresse</label>
+          <input id="email" type="email" placeholder="deg@eksempel.no" autocomplete="email" required>
+
+          <label for="password">Passord</label>
+          <input id="password" type="password" placeholder="Minst 8 tegn anbefales" autocomplete="current-password" minlength="6" required>
+
+          <button id="submit-button" class="primary-button" type="submit">Logg inn <span>→</span></button>
+        </form>
+
+        <button id="reset-button" class="text-button" type="button">Glemt passord?</button>
+        <p id="auth-message" class="message" role="status" aria-live="polite"></p>
+        <p class="security-note">🔒 Kontoen din autentiseres via Supabase.</p>
+      </div>
+    </section>
+
+    <section id="dashboard-view" hidden>
+      <div class="welcome-row">
+        <div>
+          <div class="eyebrow">OVERSIKT</div>
+          <h1>Dashboard<span class="accent">.</span></h1>
+          <p class="muted">Velkommen til Vehicle Tracker.</p>
+        </div>
+        <button id="logout-button" class="secondary-button" type="button">Logg ut ↗</button>
+      </div>
+
+      <div class="user-panel">
+        <span class="avatar">V</span>
+        <div>
+          <strong>Du er logget inn</strong>
+          <p id="user-email" class="muted"></p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-label">KJØRETØY</span>
+          <div class="stat-number">—</div>
+          <p>Registrerte kjøretøy</p>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">OBSERVASJONER</span>
+          <div class="stat-number">—</div>
+          <p>Totalt registrerte treff</p>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">API-OPPSLAG</span>
+          <div class="stat-number">—</div>
+          <p>Kjøretøyoppslag</p>
+        </article>
+      </div>
+
+      <article class="coming-soon">
+        <div class="coming-icon">🚘</div>
+        <div>
+          <h2>Kjøretøyregisteret kommer snart</h2>
+          <p class="muted">Neste steg er å koble til databasen og bygge søk, kjøretøyinformasjon og observasjonshistorikk.</p>
+        </div>
+        <span class="badge">UNDER UTVIKLING</span>
+      </article>
+
+      <footer class="dashboard-footer">Vehicle Tracker <span>•</span> Første versjon</footer>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
+</body>
+</html>
 
