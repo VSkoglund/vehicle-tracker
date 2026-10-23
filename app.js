@@ -1,5 +1,5 @@
 // Sett inn prosjektets Project URL og publishable key fra Supabase.
-const SUPABASE_URL = "https://nvokgifszhhbjxkhnhga.supabase.co/rest/v1/";
+const SUPABASE_URL = "https://nvokgifszhhbjxkhnhga.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_L-ipz6FQF-o90K7abcGuCA_RuW8l0UH";
 
 const authView = document.getElementById("auth-view");
