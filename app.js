@@ -419,23 +419,26 @@ $("lookup-form").addEventListener("submit", async event => {
     );
 
   } finally {
-    // Lagre søket i historikken.
-    try {
-      const { error: historyError } = await supabaseClient
-        .from("search_history")
-        .insert({
-          user_id: currentUserId(),
-          registration_number: registration,
-          success,
-          message: message || "Søket lyktes"
-        });
+// Lagre søket i historikken.
+try {
+  const userId = await currentUserId();
 
-      if (historyError) {
-        console.error("Kunne ikke lagre søkehistorikken:", historyError.message);
-      }
-    } catch (historyError) {
-      console.error("Feil ved lagring av søkehistorikk:", historyError);
-    }
+  const { error: historyError } = await supabaseClient
+    .from("search_history")
+    .insert({
+      user_id: userId,
+      registration_number: registration,
+      success,
+      message: message || "Søket lyktes"
+    });
+
+  if (historyError) {
+    console.error("Kunne ikke lagre søkehistorikken:", historyError.message);
+  }
+} catch (historyError) {
+  console.error("Feil ved lagring av søkehistorikk:", historyError);
+}
+
 
     button.disabled = false;
     button.innerHTML = 'Søk kjøretøy <span>→</span>';
