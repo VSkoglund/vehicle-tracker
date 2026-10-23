@@ -492,31 +492,105 @@ $("save-vehicle-button").addEventListener("click", async () => {
 
 async function refreshDashboard() {
   if (!supabaseClient) return;
-  const [vehicles, observations] = await Promise.all([
-    supabaseClient.from("vehicles").select("id,registration_number,make,model,created_at").order("created_at", { ascending: false }),
-    supabaseClient.from("observations").select("id,vehicle_id,observed_at,location,note,created_at").order("observed_at", { ascending: false }).limit(8)
+
+  const [vehicles, observations, searches] = await Promise.all([
+    supabaseClient
+      .from("vehicles")
+      .select("id,registration_number,make,model,created_at")
+      .order("created_at", { ascending: false }),
+
+    supabaseClient
+      .from("observations")
+      .select("id")
+      .order("observed_at", { ascending: false }),
+
+    supabaseClient
+      .from("search_history")
+      .select("id,registration_number,searched_at,success,message")
+      .order("searched_at", { ascending: false })
+      .limit(10)
   ]);
-  $("stat-vehicles").textContent = vehicles.error ? "—" : String((vehicles.data || []).length);
-  $("stat-observations").textContent = observations.error ? "—" : String((observations.data || []).length);
+
+  // Oppdater statistikken
+  $("stat-vehicles").textContent = vehicles.error
+    ? "—"
+    : String((vehicles.data || []).length);
+
+  $("stat-observations").textContent = observations.error
+    ? "—"
+    : String((observations.data || []).length);
+
+  // Lagrede kjøretøy
   const savedHost = $("saved-vehicles");
   savedHost.replaceChildren();
-  if (vehicles.error) savedHost.innerHTML = `<p class="muted">Kunne ikke laste registeret. ${escapeHtml(vehicles.error.message)}</p>`;
-  else if (!vehicles.data?.length) savedHost.innerHTML = `<p class="muted">Du har ikke lagret noen kjøretøy ennå. Søk opp et nummer og trykk «Lagre kjøretøy».</p>`;
-  else vehicles.data.forEach(vehicle => savedHost.append(createVehicleRow(vehicle)));
-  const obsHost = $("recent-observations");
-  obsHost.replaceChildren();
-  if (observations.error) obsHost.innerHTML = `<p class="muted">Kunne ikke laste observasjoner.</p>`;
-  else if (!observations.data?.length) obsHost.innerHTML = `<p class="muted">Ingen observasjoner ennå.</p>`;
-  else {
-    const ids = [...new Set(observations.data.map(o => o.vehicle_id).filter(Boolean))];
-    let vehicleMap = {};
-    if (ids.length) {
-      const lookup = await supabaseClient.from("vehicles").select("id,registration_number,make,model").in("id", ids);
-      (lookup.data || []).forEach(v => vehicleMap[v.id] = v);
-    }
-    observations.data.forEach(o => obsHost.append(createObservationRow(o, vehicleMap[o.vehicle_id])));
+
+  if (vehicles.error) {
+    savedHost.innerHTML =
+      `<p class="muted">Kunne ikke laste registeret. ${escapeHtml(vehicles.error.message)}</p>`;
+  } else if (!vehicles.data?.length) {
+    savedHost.innerHTML =
+      `<p class="muted">Du har ikke lagret noen kjøretøy ennå. Søk opp et nummer og trykk «Lagre kjøretøy».</p>`;
+  } else {
+    vehicles.data.forEach(vehicle => {
+      savedHost.append(createVehicleRow(vehicle));
+    });
+  }
+
+  // Siste søk
+  const searchHost = $("recent-observations");
+  searchHost.replaceChildren();
+
+  if (searches.error) {
+    searchHost.innerHTML =
+      `<p class="muted">Kunne ikke laste søkehistorikken. ${escapeHtml(searches.error.message)}</p>`;
+  } else if (!searches.data?.length) {
+    searchHost.innerHTML =
+      `<p class="muted">Ingen søk ennå.</p>`;
+  } else {
+    searches.data.forEach(search => {
+      const row = document.createElement("div");
+      row.className = "saved-row";
+
+      const main = document.createElement("div");
+      main.className = "saved-main";
+
+      const title = document.createElement("strong");
+      title.textContent = search.registration_number;
+
+      const sub = document.createElement("span");
+      sub.className = "muted tiny";
+
+      const date = search.searched_at
+        ? new Date(search.searched_at).toLocaleString("nb-NO")
+        : "Ukjent tidspunkt";
+
+      sub.textContent = `${date} · ${search.success ? "Vellykket" : "Mislykket"}`;
+
+      main.append(title, sub);
+
+      if (!search.success && search.message) {
+        const message = document.createElement("span");
+        message.className = "muted tiny";
+        message.textContent = search.message;
+        main.append(message);
+      }
+
+      const searchAgain = document.createElement("button");
+      searchAgain.type = "button";
+      searchAgain.className = "text-button";
+      searchAgain.textContent = "Søk igjen";
+
+      searchAgain.addEventListener("click", () => {
+        $("registration-input").value = search.registration_number;
+        $("registration-input").focus();
+      });
+
+      row.append(main, searchAgain);
+      searchHost.append(row);
+    });
   }
 }
+
 function createVehicleRow(vehicle) {
   const row = document.createElement("div");
   row.className = "saved-row";
