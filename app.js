@@ -347,37 +347,100 @@ function renderLookup(payload, record) {
 }
 $("lookup-form").addEventListener("submit", async event => {
   event.preventDefault();
+
   const registration = $("registration-input").value.trim().replace(/\s+/g, "").toUpperCase();
+
   if (!/^[A-Z0-9]{2,8}$/.test(registration)) {
     setMessage($("lookup-message"), "Skriv inn et gyldig registreringsnummer uten mellomrom.", "error");
     return;
   }
+
   const button = $("lookup-button");
   button.disabled = true;
   button.textContent = "Søker …";
   setMessage($("lookup-message"), "Henter tekniske data …");
   $("lookup-results").hidden = true;
+
+  let success = false;
+  let message = "";
+
   try {
-    const { data, error } = await supabaseClient.functions.invoke("vehicle-lookup", { body: { kjennemerke: registration } });
+    const { data, error } = await supabaseClient.functions.invoke(
+      "vehicle-lookup",
+      { body: { kjennemerke: registration } }
+    );
+
     if (error) {
       let details = error.message || "Ukjent feil";
+
       if (error.context && typeof error.context.json === "function") {
-        try { const body = await error.context.json(); if (body?.error) details = body.error; } catch {}
+        try {
+          const body = await error.context.json();
+          if (body?.error) details = body.error;
+        } catch {}
       }
+
       throw new Error(details);
     }
+
     if (data?.error) throw new Error(data.error);
+
     const record = firstVehicleFromResponse(data);
-    if (!record || typeof record !== "object") throw new Error("API-et returnerte ingen kjøretøydata for dette nummeret.");
+
+    if (!record || typeof record !== "object") {
+      throw new Error("API-et returnerte ingen kjøretøydata for dette nummeret.");
+    }
+
+    success = true;
+    message = "Søket lyktes";
+
     lookupCount += 1;
-    $("stat-last-lookup").textContent = new Date().toLocaleTimeString("no-NO", { hour: "2-digit", minute: "2-digit" });
+
+    $("stat-last-lookup").textContent = new Date().toLocaleTimeString("no-NO", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
     renderLookup(data, record);
-    setMessage($("lookup-message"), "Kjøretøydata hentet. Oppslaget er ikke registrert som en observasjon.", "success");
+
+    setMessage(
+      $("lookup-message"),
+      "Kjøretøydata hentet. Oppslaget er ikke registrert som en observasjon.",
+      "success"
+    );
+
   } catch (error) {
-    setMessage($("lookup-message"), `Oppslaget mislyktes: ${error.message || "Ukjent feil"}`, "error");
+    message = error.message || "Ukjent feil";
+
+    setMessage(
+      $("lookup-message"),
+      `Oppslaget mislyktes: ${message}`,
+      "error"
+    );
+
   } finally {
+    // Lagre søket i historikken.
+    try {
+      const { error: historyError } = await supabaseClient
+        .from("search_history")
+        .insert({
+          user_id: currentUserId(),
+          registration_number: registration,
+          success,
+          message: message || "Søket lyktes"
+        });
+
+      if (historyError) {
+        console.error("Kunne ikke lagre søkehistorikken:", historyError.message);
+      }
+    } catch (historyError) {
+      console.error("Feil ved lagring av søkehistorikk:", historyError);
+    }
+
     button.disabled = false;
     button.innerHTML = 'Søk kjøretøy <span>→</span>';
+
+    await refreshDashboard();
   }
 });
 
@@ -455,24 +518,54 @@ async function refreshDashboard() {
   }
 }
 function createVehicleRow(vehicle) {
-  const row = document.createElement("button");
-  row.type = "button";
+  const row = document.createElement("div");
   row.className = "saved-row";
-  const name = document.createElement("span");
-  name.className = "saved-main";
+
+  const open = document.createElement("button");
+  open.type = "button";
+  open.className = "saved-main";
+  open.style.cssText = "text-align:left; flex:1; min-width:0; background:transparent; border:0; color:inherit; padding:0;";
+
   const title = document.createElement("strong");
   title.textContent = [vehicle.make, vehicle.model].filter(Boolean).join(" ") || vehicle.registration_number;
+
   const sub = document.createElement("span");
   sub.className = "muted tiny";
   sub.textContent = vehicle.registration_number;
-  name.append(title, sub);
-  const arrow = document.createElement("span");
-  arrow.className = "row-arrow";
-  arrow.textContent = "→";
-  row.append(name, arrow);
-  row.addEventListener("click", () => openWorkspace(vehicle));
+
+  open.append(title, sub);
+  open.addEventListener("click", () => openWorkspace(vehicle));
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "text-button danger-text";
+  remove.textContent = "Slett";
+
+  remove.addEventListener("click", async () => {
+    if (!confirm(`Vil du slette ${vehicle.registration_number} fra lagrede kjøretøy?`)) return;
+
+    remove.disabled = true;
+    remove.textContent = "Sletter…";
+
+    const { error } = await supabaseClient
+      .from("vehicles")
+      .delete()
+      .eq("id", vehicle.id);
+
+    if (error) {
+      alert("Kunne ikke slette kjøretøyet: " + error.message);
+      remove.disabled = false;
+      remove.textContent = "Slett";
+      return;
+    }
+
+    await refreshDashboard();
+  });
+
+  row.append(open, remove);
   return row;
 }
+
 function createObservationRow(observation, vehicle) {
   const row = document.createElement("div");
   row.className = "saved-row observation-row";
