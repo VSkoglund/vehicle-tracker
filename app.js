@@ -476,18 +476,58 @@ function createVehicleRow(vehicle) {
 function createObservationRow(observation, vehicle) {
   const row = document.createElement("div");
   row.className = "saved-row observation-row";
+
   const main = document.createElement("span");
   main.className = "saved-main";
+
   const title = document.createElement("strong");
   title.textContent = vehicle?.registration_number || "Kjøretøy";
+
   const sub = document.createElement("span");
   sub.className = "muted tiny";
+
   const date = observation.observed_at || observation.created_at;
-  sub.textContent = `${date ? new Date(date).toLocaleString("no-NO") : "Ukjent tidspunkt"}${observation.location ? " · " + observation.location : ""}`;
-  main.append(title, sub);
-  row.append(main);
+  sub.textContent = `${date ? new Date(date).toLocaleString("nb-NO") : "Ukjent tidspunkt"}${observation.location ? " · " + observation.location : ""}`;
+
+  if (observation.note) {
+    const note = document.createElement("span");
+    note.className = "muted tiny";
+    note.textContent = observation.note;
+    main.append(title, sub, note);
+  } else {
+    main.append(title, sub);
+  }
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "text-button danger-text";
+  remove.textContent = "Slett observasjon";
+
+  remove.addEventListener("click", async () => {
+    if (!confirm("Er du sikker på at du vil slette denne observasjonen?")) return;
+
+    remove.disabled = true;
+    remove.textContent = "Sletter...";
+
+    const { error } = await supabaseClient
+      .from("observations")
+      .delete()
+      .eq("id", observation.id);
+
+    if (error) {
+      alert("Kunne ikke slette observasjonen: " + error.message);
+      remove.disabled = false;
+      remove.textContent = "Slett observasjon";
+      return;
+    }
+
+    await refreshDashboard();
+  });
+
+  row.append(main, remove);
   return row;
 }
+
 $("refresh-button").addEventListener("click", refreshDashboard);
 
 async function openWorkspace(vehicle) {
